@@ -5,7 +5,7 @@
 //  Created by Basivi Reddy on 12/02/25.
 //
 
-struct PopularPeopleModel: Codable {
+struct PopularPeopleModel: Decodable {
     var page: Int?
     var results: [PeopleList]?
     var totalPages, totalResults: Int?
@@ -18,7 +18,7 @@ struct PopularPeopleModel: Codable {
 }
 
 // MARK: - Result
-struct PeopleList: Codable {
+struct PeopleList: Decodable {
     var adult: Bool?
     var gender, id: Int?
     var knownForDepartment: KnownForDepartment?
@@ -39,7 +39,7 @@ struct PeopleList: Codable {
 }
 
 // MARK: - KnownFor
-struct KnownFor: Codable {
+struct KnownFor: Decodable {
     var backdropPath: String?
     var id: Int?
     var title, originalTitle, overview, posterPath: String?
@@ -77,11 +77,22 @@ struct KnownFor: Codable {
     }
 }
 
-enum MediaType: String, Codable {
+enum MediaType: String, Decodable {
     case movie = "movie"
     case tv = "tv"
 }
 
-enum KnownForDepartment: String, Codable {
+enum KnownForDepartment: String, Decodable {
     case acting = "Acting"
+    case directing = "Directing"
+    case writing = "Writing"
+    case producing = "Producing"
+    case visualEffects = "Visual Effects"
+    case sound = "Sound"
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        let rawValue = try container.decode(String.self)
+        self = KnownForDepartment(rawValue: rawValue) ?? .acting // Default to .acting if unknown
+    }
 }

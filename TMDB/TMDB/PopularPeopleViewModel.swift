@@ -9,32 +9,54 @@ import SwiftUI
 import Combine
 
 class PeopleViewModel: ObservableObject {
-    @Published var people: PopularPeopleModel?
+    @Published var peoples: [PeopleList] = []
     @Published var searchText = ""
     private var cancellables = Set<AnyCancellable>()
-    private var page = 1
+    @Published var isLoading = false
+       private var currentPage = 1
     
     init() {
         fetchPeople()
     }
     
     func fetchPeople() {
-        let urlString = "https://api.themoviedb.org/3/person/popular?page=\(page)&api_key=YOUR_API_KEY"
+        guard !isLoading else {
+            return
+        }
+        isLoading = true
+        let urlString = "https://api.themoviedb.org/3/person/popular?page=\(currentPage)&api_key=19b2da48826ec1cd74ed33419025f44f"
         guard let url = URL(string: urlString) else { return }
         
         URLSession.shared.dataTaskPublisher(for: url)
             .map { $0.data }
             .decode(type: PopularPeopleModel.self, decoder: JSONDecoder())
             .receive(on: DispatchQueue.main)
-            .sink(receiveCompletion: { _ in }, receiveValue: { [weak self] response in
-                guard let responseModel = response else { return }
-                if let peopleList = responseModel.results{
-                    self?.people?.results?.append(contentsOf: peopleList)
+            .sink(receiveCompletion: { completion in
+                switch completion {
+                case .failure(let error):
+                    print("Error: \(error)")
+                    DispatchQueue.main.async { self.isLoading = false }
+                case .finished:
+                    DispatchQueue.main.async { self.isLoading = false }
                 }
-               
+            }, receiveValue: { [weak self] response in
+                if let peopleList = response.results{
+                    DispatchQueue.main.async {
+                        print(peopleList.count)
+                        self?.peoples.append(contentsOf: peopleList)
+                        self?.currentPage += 1
+                        
+                    }
+                }else{
+                    self?.isLoading = false
+                }
+                
             })
             .store(in: &cancellables)
     }
+    
+    
+
     
 //    func searchPeople() {
 //        let query = searchText.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""

@@ -8,24 +8,15 @@
 import SwiftUI
 
 struct PeoplesCardView: View {
-    var model: PeopleList?
+    var model: PeopleList
     var body: some View {
         HStack(alignment: .center) {
-            Image("image") // Replace with your image asset
-                .resizable()
-                .frame(width: 50, height: 50)
-                .cornerRadius(25)
-                .padding(.leading,16)
-            Text("Miho Nomoto")
+            AsyncImageView(urlString: "https://image.tmdb.org/t/p/w600_and_h900_bestv2" + (model.profilePath ?? ""))
+            Text(model.name ?? "")
                 .font(.headline)
                 .foregroundColor(.black)
+            
         }.frame(maxWidth: .infinity,alignment: .leading)
         
-    }
-}
-
-struct PeoplesCardView_Previews: PreviewProvider {
-    static var previews: some View {
-        PeoplesCardView()
     }
 }
