@@ -11,25 +11,39 @@ import SwiftUI
 
 struct ContentView: View {
     @StateObject private var viewModel = PeopleViewModel()
+    @State private var searchText = ""
     var body: some View {
-        ScrollView {
-            LazyVStack {
-                ForEach(viewModel.peoples, id: \.id){ people in
-                    if let p = people{
-                        PeoplesCardView(model: p)
-                            .onAppear {
-                                if people.id == viewModel.peoples.last?.id {
-                                    viewModel.fetchPeople()
+        NavigationView {
+            ScrollView {
+                LazyVStack {
+                    ForEach(viewModel.peoples, id: \.id){ people in
+                        if let p = people{
+                            PeoplesCardView(model: p)
+                                .onAppear {
+                                    if people.id == viewModel.peoples.last?.id {
+                                        viewModel.fetchPeople()
+                                    }
                                 }
-                            }
+                        }
+                    }
+                    if viewModel.isLoading {
+                        ProgressView("Loading more...")
+                            .padding()
                     }
                 }
-                if viewModel.isLoading {
-                    ProgressView("Loading more...")
-                        .padding()
-                }
             }
+           
+            .searchable(text: $searchText, prompt: "Search People")
+            .onChange(of: searchText) { newValue in
+                viewModel.searchText = newValue
+                viewModel.setupSearch()
+            }
+            .padding()
+            .navigationTitle("Search")
         }
+        
+      
+       
     }
 }
 

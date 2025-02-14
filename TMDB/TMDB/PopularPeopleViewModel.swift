@@ -16,8 +16,22 @@ class PeopleViewModel: ObservableObject {
        private var currentPage = 1
     
     init() {
-        fetchPeople()
+            fetchPeople()
     }
+    
+     func setupSearch() {
+            $searchText
+                .debounce(for: .milliseconds(500), scheduler: RunLoop.main) // Prevents excessive API calls
+                .removeDuplicates()
+                .sink { [weak self] text in
+                    guard let self = self, !text.isEmpty else {
+                        self?.peoples = []
+                        return
+                    }
+                    self.searchPeople() // Call API
+                }
+                .store(in: &cancellables)
+        }
     
     func fetchPeople() {
         guard !isLoading else {
@@ -58,18 +72,29 @@ class PeopleViewModel: ObservableObject {
     
 
     
-//    func searchPeople() {
-//        let query = searchText.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
-//        let urlString = "https://api.themoviedb.org/3/search/person?query=\(query)&page=1&api_key=YOUR_API_KEY"
-//        guard let url = URL(string: urlString) else { return }
-//
-//        URLSession.shared.dataTaskPublisher(for: url)
-//            .map { $0.data }
-//            .decode(type: PeopleResponse.self, decoder: JSONDecoder())
-//            .receive(on: DispatchQueue.main)
-//            .sink(receiveCompletion: { _ in }, receiveValue: { [weak self] response in
-//                self?.people = response.results
-//            })
-//            .store(in: &cancellables)
-//    }
+    func searchPeople() {
+        let query = searchText.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        let urlString = "https://api.themoviedb.org/3/search/person?query=\(query)&page=1&api_key=19b2da48826ec1cd74ed33419025f44f"
+        guard let url = URL(string: urlString) else { return }
+        
+        URLSession.shared.dataTaskPublisher(for: url)
+            .map { $0.data }
+            .decode(type: PopularPeopleModel.self, decoder: JSONDecoder())
+            .receive(on: DispatchQueue.main)
+            .sink(receiveCompletion: { _ in }, receiveValue: { [weak self] response in
+                
+                if let peopleList = response.results{
+                    DispatchQueue.main.async {
+                        print(peopleList.count)
+                        self?.peoples = peopleList
+                        self?.currentPage += 1
+                        
+                    }
+                }else{
+                    self?.isLoading = false
+                }
+                
+            })
+            .store(in: &cancellables)
+    }
 }
