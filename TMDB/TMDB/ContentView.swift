@@ -14,36 +14,60 @@ struct ContentView: View {
     @State private var searchText = ""
     var body: some View {
         NavigationView {
-            ScrollView {
-                LazyVStack {
-                    ForEach(viewModel.peoples, id: \.id){ people in
-                        if let p = people{
-                            PeoplesCardView(model: p)
-                                .onAppear {
-                                    if people.id == viewModel.peoples.last?.id {
-                                        viewModel.fetchPeople()
-                                    }
-                                }
+            VStack{
+                CustomTextField(text: $searchText, placeholder: "Search People")
+                    .padding()
+                    .onChange(of: searchText) { newValue in
+                        viewModel.searchText = newValue
+                        if viewModel.searchText.isEmpty{
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                viewModel.fetchPeople()
+                            }
+                        }else{
+                            viewModel.setupSearch()
                         }
                     }
-                    if viewModel.isLoading {
-                        ProgressView("Loading more...")
-                            .padding()
+                
+                ScrollView {
+                    
+                    
+                    
+                    LazyVStack {
+                        ForEach(viewModel.peoples, id: \.id){ people in
+                            NavigationLink(destination: PersonDetailsView(model: people)) {
+                                if let p = people{
+                                    PeoplesCardView(model: p)
+                                        .onAppear {
+                                            if people.id == viewModel.peoples.last?.id {
+                                                viewModel.fetchPeople()
+                                            }
+                                        }
+                                }
+                            }
+                        }
+                        if viewModel.isLoading {
+                            ProgressView("Loading more...")
+                                .padding()
+                        }
                     }
                 }
+                .navigationTitle("Popular People")
             }
-           
-            .searchable(text: $searchText, prompt: "Search People")
-            .onChange(of: searchText) { newValue in
-                viewModel.searchText = newValue
-                viewModel.setupSearch()
-            }
-            .padding()
-            .navigationTitle("Search")
         }
         
-      
-       
+        
+        
+    }
+}
+
+struct CustomTextField: View {
+    @Binding var text: String
+    var placeholder: String
+    
+    var body: some View {
+        TextField(placeholder, text: $text)
+            .padding()
+            .background(RoundedRectangle(cornerRadius: 10).stroke(Color.gray, lineWidth: 1))
     }
 }
 
@@ -64,15 +88,9 @@ struct AsyncImageView: View {
             if let image = image {
                 Image(uiImage: image)
                     .resizable()
-                    .frame(width: 50, height: 50)
-                    .cornerRadius(25)
-                    .padding(.leading,16)
             } else {
                 Image("image")
-                    .frame(width: 50, height: 50)
                     .aspectRatio(contentMode: .fill)
-                    .cornerRadius(25)
-                    .padding(.leading,16)
                     .task {
                         image = await loadImage(from: urlString)
                     }

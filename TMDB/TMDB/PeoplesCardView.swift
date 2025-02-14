@@ -12,6 +12,9 @@ struct PeoplesCardView: View {
     var body: some View {
         HStack(alignment: .center) {
             AsyncImageView(urlString: "https://image.tmdb.org/t/p/w600_and_h900_bestv2" + (model.profilePath ?? ""))
+                .frame(width: 50, height: 50)
+                .cornerRadius(25)
+                .padding(.leading,16)
             Text(model.name ?? "")
                 .font(.headline)
                 .foregroundColor(.black)
