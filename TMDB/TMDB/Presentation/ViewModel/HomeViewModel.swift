@@ -1,14 +1,14 @@
 //
-//  PopularPeopleViewModel.swift
+//  HomeViewModel.swift
 //  TMDB
 //
-//  Created by Basivi Reddy on 12/02/25.
+//  Created by Basivi Reddy on 15/02/25.
 //
 
 import SwiftUI
 import Combine
 
-class PeopleViewModel: ObservableObject {
+class HomeViewModel: ObservableObject {
     @Published var peoples: [PeopleList] = []
     @Published var searchText = ""
     private var cancellables = Set<AnyCancellable>()
@@ -16,7 +16,7 @@ class PeopleViewModel: ObservableObject {
        private var currentPage = 1
     
     init() {
-            fetchPeople()
+        getPopulaPeopleApi()
     }
     
      func setupSearch() {
@@ -28,17 +28,17 @@ class PeopleViewModel: ObservableObject {
                         self?.peoples = []
                         return
                     }
-                    self.searchPeople() // Call API
+                    self.searchPopularPeoples() // Call API
                 }
                 .store(in: &cancellables)
         }
     
-    func fetchPeople() {
+    func getPopulaPeopleApi() {
         guard !isLoading else {
             return
         }
         isLoading = true
-        let urlString = "https://api.themoviedb.org/3/person/popular?page=\(currentPage)&api_key=19b2da48826ec1cd74ed33419025f44f"
+        let urlString = APIConfig.baseURL + "/3/person/popular?page=\(currentPage)&api_key=" + APIConfig.accessKey
         guard let url = URL(string: urlString) else { return }
         
         URLSession.shared.dataTaskPublisher(for: url)
@@ -69,12 +69,9 @@ class PeopleViewModel: ObservableObject {
             .store(in: &cancellables)
     }
     
-    
-
-    
-    func searchPeople() {
+    func searchPopularPeoples() {
         let query = searchText.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
-        let urlString = "https://api.themoviedb.org/3/search/person?query=\(query)&page=1&api_key=19b2da48826ec1cd74ed33419025f44f"
+        let urlString = APIConfig.baseURL + "/3/search/person?query=\(query)&page=1&api_key=" + APIConfig.accessKey
         guard let url = URL(string: urlString) else { return }
         
         URLSession.shared.dataTaskPublisher(for: url)
